@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Comic Reader - Chapters with Many Pages</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap');
+
+        :root {
+            --primary-color: #c0a080;
+            --secondary-color: #2c3e50;
+            --background-color: #f9f6f2;
+            --text-color: #333;
+            --nav-color: #3498db;
+            --nav-hover-color: #2980b9;
+            --transition-default: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 3rem auto;
+            padding: 3rem;
+        }
+
+        .shadow-box {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        header {
+            background-color: var(--secondary-color);
+            color: var(--primary-color);
+            text-align: center;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(192, 160, 128, 0.1), transparent);
+            transform: rotate(45deg);
+            animation: shine 10s infinite linear;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-50%) rotate(45deg); }
+            100% { transform: translateX(50%) rotate(45deg); }
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            margin: 0 0 1rem;
+            letter-spacing: 2px;
+            position: relative;
+            z-index: 1;
+        }
+
+        #chapter-select {
+            margin: 1rem 0;
+            padding: 0.5rem;
+            font-size: 1rem;
+            border-radius: 5px;
+            border: 1px solid var(--primary-color);
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        #comic-container {
+            position: relative;
+            padding: 2rem;
+            margin-bottom: 3rem;
+            transition: var(--transition-default);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #comic-container:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 35px 60px rgba(0, 0, 0, 0.2);
+        }
+
+        #comic-image {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-overlay {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 50%;
+            cursor: pointer;
+            transition: var(--transition-default);
+        }
+
+        #prev-overlay { left: 0; }
+        #next-overlay { right: 0; }
+
+        .nav-overlay:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+
+        #navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2rem;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            background-color: var(--nav-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: var(--transition-default);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        button:hover {
+            background-color: var(--nav-hover-color);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.4);
+        }
+
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        #progress-container {
+            flex-grow: 1;
+            margin: 0 2rem;
+            background-color: #ddd;
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        #progress-bar {
+            height: 100%;
+            width: 0;
+            background-image: linear-gradient(to right, #0013FE, #F70068, #08EB96, #0983F7);
+            background-size: 300% 100%;
+            transition: var(--transition-default);
+        }
+
+        #page-tooltip {
+            position: absolute;
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 14px;
+            pointer-events: none;
+            opacity: 0;
+            transition: var(--transition-default);
+            transform: translateY(10px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        #page-counter {
+            text-align: center;
+            font-size: 1.1rem;
+            margin-top: 1rem;
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+
+        #chapter-navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+        }
+
+        #page-jump {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+
+        #page-jump input {
+            width: 60px;
+            padding: 5px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Premium Comic Experience</h1>
+        <select id="chapter-select"></select>
+    </header>
+    <main class="container shadow-box">
+        <div id="comic-container" class="shadow-box">
+            <img id="comic-image" src="/api/placeholder/800/600" alt="Comic panel">
+            <div id="prev-overlay" class="nav-overlay" title="Previous page"></div>
+            <div id="next-overlay" class="nav-overlay" title="Next page"></div>
+        </div>
+        <div id="navigation">
+            <button id="prev-btn">Previous</button>
+            <div id="progress-container">
+                <div id="progress-bar"></div>
+                <div id="page-tooltip"></div>
+            </div>
+            <button id="next-btn">Next</button>
+        </div>
+        <div id="page-counter"></div>
+        <div id="page-jump">
+            <input type="number" id="page-input" min="1" placeholder="Page #">
+            <button id="jump-btn">Jump</button>
+        </div>
+        <div id="chapter-navigation">
+            <button id="prev-chapter-btn">Previous Chapter</button>
+            <button id="next-chapter-btn">Next Chapter</button>
+        </div>
+    </main>
+    <script>
+        const comicImage = document.getElementById('comic-image');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const prevOverlay = document.getElementById('prev-overlay');
+        const nextOverlay = document.getElementById('next-overlay');
+        const progressBar = document.getElementById('progress-bar');
+        const progressContainer = document.getElementById('progress-container');
+        const pageTooltip = document.getElementById('page-tooltip');
+        const pageCounter = document.getElementById('page-counter');
+        const chapterSelect = document.getElementById('chapter-select');
+        const prevChapterBtn = document.getElementById('prev-chapter-btn');
+        const nextChapterBtn = document.getElementById('next-chapter-btn');
+        const pageInput = document.getElementById('page-input');
+        const jumpBtn = document.getElementById('jump-btn');
+
+        let currentChapter = 0;
+        let currentPage = 1;
+
+        const comicData = [
+            { title: "Chapter 1: The Beginning", pages: 100 },
+            { title: "Chapter 2: The Journey", pages: 150 },
+            { title: "Chapter 3: The Climax", pages: 120 },
+            { title: "Chapter 4: The Resolution", pages: 80 }
+        ];
+
+        function generateComicPages(chapterIndex, pageCount) {
+            return Array.from({ length: pageCount }, (_, i) => 
+                `/api/placeholder/${800 + i % 10}/${600 + i % 10}?chapter=${chapterIndex + 1}&page=${i + 1}`
+            );
+        }
+
+        const comicChapters = comicData.map((chapter, index) => ({
+            ...chapter,
+            pages: generateComicPages(index, chapter.pages)
+        }));
+
+        function updateComic() {
+            const chapter = comicChapters[currentChapter];
+            comicImage.src = chapter.pages[currentPage - 1];
+            prevBtn.disabled = currentPage === 1;
+            nextBtn.disabled = currentPage === chapter.pages.length;
+            prevOverlay.style.display = prevBtn.disabled ? 'none' : 'block';
+            nextOverlay.style.display = nextBtn.disabled ? 'none' : 'block';
+            prevChapterBtn.disabled = currentChapter === 0;
+            nextChapterBtn.disabled = currentChapter === comicChapters.length - 1;
+            updateProgressBar();
+            updatePageCounter();
+            pageInput.max = chapter.pages.length;
+        }
+
+        function updateProgressBar() {
+            const chapter = comicChapters[currentChapter];
+            const progress = ((currentPage - 1) / (chapter.pages.length - 1)) * 100;
+            progressBar.style.width = `${progress}%`;
+            progressBar.style.backgroundPosition = `${progress}% 0`;
+        }
+
+        function updatePageCounter() {
+            const chapter = comicChapters[currentChapter];
+            pageCounter.textContent = `${chapter.title} - Page ${currentPage} of ${chapter.pages.length}`;
+        }
+
+        function goToPage(direction) {
+            const chapter = comicChapters[currentChapter];
+            if (direction === 'prev' && currentPage > 1) {
+                currentPage--;
+            } else if (direction === 'next' && currentPage < chapter.pages.length) {
+                currentPage++;
+            }
+            updateComic();
+        }
+
+        function changeChapter(direction) {
+            if (direction === 'prev' && currentChapter > 0) {
+                currentChapter--;
+            } else if (direction === 'next' && currentChapter < comicChapters.length - 1) {
+                currentChapter++;
+            }
+            currentPage = 1;
+            chapterSelect.value = currentChapter;
+            updateComic();
+        }
+
+        function populateChapterSelect() {
+            comicChapters.forEach((chapter, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = chapter.title;
+                chapterSelect.appendChild(option);
+            });
+        }
+
+        chapterSelect.addEventListener('change', (e) => {
+            currentChapter = parseInt(e.target.value);
+            currentPage = 1;
+            updateComic();
+        });
+
+        document.querySelectorAll('#prev-btn, #next-btn, #prev-overlay, #next-overlay').forEach(el => {
+            el.addEventListener('click', (e) => {
+                const direction = e.target.id.includes('prev') ? 'prev' : 'next';
+                goToPage(direction);
+            });
+        });
+
+        prevChapterBtn.addEventListener('click', () => changeChapter('prev'));
+        nextChapterBtn.addEventListener('click', () => changeChapter('next'));
+
+        jumpBtn.addEventListener('click', () => {
+            const pageNumber = parseInt(pageInput.value);
+            if (pageNumber && pageNumber >= 1 && pageNumber <= comicChapters[currentChapter].pages.length) {
+                currentPage = pageNumber;
+                updateComic();
+            }
+        });
+
+        progressContainer.addEventListener('mousemove', (e) => {
+            const rect = progressContainer.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const chapter = comicChapters[currentChapter];
+            const hoverPage = Math.ceil((x / rect.width) * chapter.pages.length);
+            pageTooltip.textContent = `Page ${hoverPage}`;
+            pageTooltip.style.left = `${x}px`;
+            pageTooltip.style.opacity = '1';
+            pageTooltip.style.transform = 'translateY(0)';
+        });
+
+        progressContainer.addEventListener('mouseleave', () => {
+            pageTooltip.style.opacity = '0';
+            pageTooltip.style.transform = 'translateY(10px)';
+        });
+
+        progressContainer.addEventListener('click', (e) => {
+            const rect = progressContainer.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const chapter = comicChapters[currentChapter];
+            currentPage = Math.ceil((x / rect.width) * chapter.pages.length);
+            updateComic();
+        });
+
+        populateChapterSelect();
+        updateComic();
+    </script>
+</body>
+</html>
