@@ -272,10 +272,10 @@
         ];
 
         function generateComicPages(chapterIndex, pageCount) {
-            return Array.from({ length: pageCount }, (_, i) => 
-                `/api/placeholder/${800 + i % 10}/${600 + i % 10}?chapter=${chapterIndex + 1}&page=${i + 1}`
-            );
-        }
+    return Array.from({ length: pageCount }, (_, i) => 
+        `/images/chapter${chapterIndex + 1}-page${i + 1}.jpg`
+    );
+}
 
         const comicChapters = comicData.map((chapter, index) => ({
             ...chapter,
