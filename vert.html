@@ -121,7 +121,7 @@
 
         function generateComicPages(chapterIndex, pageCount) {
             return Array.from({ length: pageCount }, (_, i) => 
-                `https://via.placeholder.com/800x1200.png?text=Chapter+${chapterIndex + 1}+Page+${i + 1}`
+                `/images/chapter${chapterIndex}-page${i + 1}.jpg`
             );
         }
 
