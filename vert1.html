@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comic Reader Demo</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap');
+
+        :root {
+            --primary-color: #c0a080;
+            --secondary-color: #2c3e50;
+            --background-color: #f9f6f2;
+            --text-color: #333;
+            --progress-color-1: #0013FE;
+            --progress-color-2: #F70068;
+            --progress-color-3: #08EB96;
+            --progress-color-4: #0983F7;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        header {
+            background: linear-gradient(135deg, #2c3e50, #4a5f70);
+            color: #f1c40f;
+            text-align: center;
+            padding: 0;
+            position: fixed;
+            width: 100%;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            border-bottom: 2px solid #f1c40f;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .animated-header-placeholder {
+            width: 80%;
+            max-width: 600px;
+            height: 60px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            margin: 1rem 0;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        header.collapsed .animated-header-placeholder {
+            height: 0;
+            margin: 0;
+        }
+
+        .animated-header-placeholder::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        #chapter-select {
+            margin: 0.5rem;
+            padding: 0.7rem;
+            font-size: 1rem;
+            background-color: #f1c40f;
+            color: #2c3e50;
+            border: none;
+            border-radius: 5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #chapter-select:hover {
+            background-color: #f39c12;
+        }
+
+        #comic-container {
+            padding-top: 160px;
+            padding-right: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: padding-top 0.3s ease;
+        }
+
+        #comic-container.header-collapsed {
+            padding-top: 80px;
+        }
+
+        .comic-page {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        #loading {
+            text-align: center;
+            padding: 20px;
+            font-size: 1.2rem;
+        }
+
+        #progress-bar-container {
+            position: fixed;
+            top: 160px;
+            right: 0;
+            width: 20px;
+            height: calc(100% - 160px);
+            background-color: rgba(0, 0, 0, 0.1);
+            z-index: 999;
+            overflow: hidden;
+            transition: top 0.3s ease;
+        }
+
+        #progress-bar-container.header-collapsed {
+            top: 80px;
+            height: calc(100% - 80px);
+        }
+
+        #progress-bar {
+            width: 100%;
+            height: 0;
+            background-image: linear-gradient(to bottom, 
+                var(--progress-color-1),
+                var(--progress-color-2),
+                var(--progress-color-3),
+                var(--progress-color-4));
+            transition: height 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <header id="header">
+        <div class="animated-header-placeholder"></div>
+        <select id="chapter-select"></select>
+    </header>
+    <main id="comic-container"></main>
+    <div id="progress-bar-container">
+        <div id="progress-bar"></div>
+    </div>
+    <div id="loading" style="display: none;">Loading more pages...</div>
+    <script>
+        const comicContainer = document.getElementById('comic-container');
+        const chapterSelect = document.getElementById('chapter-select');
+        const loadingIndicator = document.getElementById('loading');
+        const progressBar = document.getElementById('progress-bar');
+        const header = document.getElementById('header');
+        const progressBarContainer = document.getElementById('progress-bar-container');
+
+        let currentChapter = 0;
+        let currentPage = 1;
+        let isLoading = false;
+
+        const comicData = [
+            { title: "Chapter 1: New Beginnings", pages: 10 },
+            { title: "Chapter 2: The Journey", pages: 15 },
+            { title: "Chapter 3: Unexpected Encounters", pages: 12 }
+        ];
+
+        function generateComicPages(chapterIndex, pageCount) {
+            return Array.from({ length: pageCount }, (_, i) => 
+                `https://via.placeholder.com/800x1200.png?text=Chapter+${chapterIndex + 1}+Page+${i + 1}`
+            );
+        }
+
+        const comicChapters = comicData.map((chapter, index) => ({
+            ...chapter,
+            pages: generateComicPages(index, chapter.pages)
+        }));
+
+        function loadMorePages() {
+            if (isLoading) return;
+            isLoading = true;
+            loadingIndicator.style.display = 'block';
+
+            const chapter = comicChapters[currentChapter];
+            const pagesToLoad = 5;
+            const endPage = Math.min(currentPage + pagesToLoad, chapter.pages.length);
+
+            for (let i = currentPage; i <= endPage; i++) {
+                const img = document.createElement('img');
+                img.src = chapter.pages[i - 1];
+                img.alt = `Page ${i}`;
+                img.className = 'comic-page';
+                comicContainer.appendChild(img);
+            }
+
+            currentPage = endPage + 1;
+            isLoading = false;
+            loadingIndicator.style.display = 'none';
+
+            if (currentPage > chapter.pages.length && currentChapter < comicChapters.length - 1) {
+                currentChapter++;
+                currentPage = 1;
+                chapterSelect.value = currentChapter;
+            }
+
+            updateProgressBar();
+        }
+
+        function handleScroll() {
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
+                loadMorePages();
+            }
+            updateProgressBar();
+
+            // Hide animated part of header when scrolling down
+            if (window.scrollY > 50) {
+                header.classList.add('collapsed');
+                comicContainer.classList.add('header-collapsed');
+                progressBarContainer.classList.add('header-collapsed');
+            } else {
+                header.classList.remove('collapsed');
+                comicContainer.classList.remove('header-collapsed');
+                progressBarContainer.classList.remove('header-collapsed');
+            }
+        }
+
+        function updateProgressBar() {
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrollPercentage = (scrollTop / scrollHeight) * 100;
+            progressBar.style.height = scrollPercentage + '%';
+            
+            const gradientStops = [
+                `var(--progress-color-1) 0%`,
+                `var(--progress-color-2) ${Math.max(0, scrollPercentage - 33.33)}%`,
+                `var(--progress-color-3) ${Math.max(0, scrollPercentage - 66.66)}%`,
+                `var(--progress-color-4) ${scrollPercentage}%`
+            ];
+            progressBar.style.backgroundImage = `linear-gradient(to bottom, ${gradientStops.join(', ')})`;
+        }
+
+        function populateChapterSelect() {
+            comicChapters.forEach((chapter, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = chapter.title;
+                chapterSelect.appendChild(option);
+            });
+        }
+
+        chapterSelect.addEventListener('change', (e) => {
+            currentChapter = parseInt(e.target.value);
+            currentPage = 1;
+            comicContainer.innerHTML = '';
+            loadMorePages();
+            window.scrollTo(0, 0);
+            updateProgressBar();
+        });
+
+        window.addEventListener('scroll', handleScroll);
+
+        populateChapterSelect();
+        loadMorePages();
+    </script>
+</body>
+</html>
