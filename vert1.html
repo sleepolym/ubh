@@ -178,7 +178,7 @@
 
         function generateComicPages(chapterIndex, pageCount) {
             return Array.from({ length: pageCount }, (_, i) => 
-                `/images/chapter-${chapterIndex + 1}/page-${i + 1}`
+                `images/chapter${chapterIndex + 1}-page${i + 1}.jpg`
             );
         }
 
